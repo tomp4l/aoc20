@@ -10,8 +10,8 @@ object Main extends IOApp {
     readInputLongs(1)
       .flatMap(n =>
         for {
-          _ <- output(1, find2020Pair(n))
-          _ <- output(2, find2020Triple(n))
+          _ <- Console.outputOptional(1, find2020Pair(n))
+          _ <- Console.outputOptional(2, find2020Triple(n))
         } yield (),
       )
       .as(ExitCode.Success)
@@ -34,10 +34,4 @@ object Main extends IOApp {
     } yield (x * y * z)
     pairs.headOption
   }
-
-  private def output(part: Int, value: Option[Long]) = value match {
-    case Some(v) => Console.writeLine(s"Part $part: $v")
-    case None => Console.error(s"Failed to complete part $part")
-  }
-
 }
