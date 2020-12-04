@@ -11,12 +11,8 @@ object Main extends IOApp {
       .flatMap { lines =>
         val passports = Passports.fromStrings(lines)
         for {
-          _ <- Console.output(1, passports.count(_.isDefined))
-          _ <- Console.output(
-            2,
-            passports.count(_.map(_.isValid).getOrElse(false)),
-          )
-
+          _ <- Console.output(1, passports.size)
+          _ <- Console.output(2, passports.count(_.isValid))
         } yield ()
       }
       .as(ExitCode.Success)
@@ -92,7 +88,7 @@ object Passport {
 }
 
 object Passports {
-  def fromStrings(strings: Seq[String]) = {
+  def fromStrings(strings: Seq[String]): Seq[Passport] = {
     val (last, passports) = strings.foldLeft(
       (Map.empty[String, String], Vector.empty[Option[Passport]]),
     ) { case ((current, passports), line) =>
@@ -109,6 +105,6 @@ object Passports {
         (current ++ lineAsMap, passports)
       }
     }
-    passports.appended(Passport.fromMap(last))
+    passports.appended(Passport.fromMap(last)).flatten
   }
 }
