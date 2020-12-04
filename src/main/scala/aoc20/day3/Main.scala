@@ -13,7 +13,6 @@ object Main extends IOApp {
         for {
           _ <- Console.output(1, xSlope(parsed, 3))
           _ <- Console.output(2, partTwo(parsed))
-
         } yield ()
       }
       .as(ExitCode.Success)
