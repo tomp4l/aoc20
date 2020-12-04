@@ -7,7 +7,8 @@ import cats.effect.{ExitCode, IO}
 object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
-    readInputLines(4)
+    readInput(4)
+      .map(_.split("\n\n").toVector)
       .flatMap { lines =>
         val passports = Passports.fromStrings(lines)
         for {
@@ -88,23 +89,15 @@ object Passport {
 }
 
 object Passports {
-  def fromStrings(strings: Seq[String]): Seq[Passport] = {
-    val (last, passports) = strings.foldLeft(
-      (Map.empty[String, String], Vector.empty[Option[Passport]]),
-    ) { case ((current, passports), line) =>
-      if (line.isEmpty)
-        (Map.empty, passports.appended(Passport.fromMap(current)))
-      else {
-        val lineAsMap = line
-          .split(" ")
-          .map(_.split(":").toList)
-          .collect { case List(k, v) =>
-            (k, v)
-          }
-          .toMap
-        (current ++ lineAsMap, passports)
-      }
-    }
-    passports.appended(Passport.fromMap(last)).flatten
-  }
+  def fromStrings(strings: Seq[String]): Seq[Passport] =
+    strings.map { line =>
+      val lineAsMap = line
+        .split(" |\n")
+        .map(_.split(":").toList)
+        .collect { case List(k, v) =>
+          (k, v)
+        }
+        .toMap
+      Passport.fromMap(lineAsMap)
+    }.flatten
 }
