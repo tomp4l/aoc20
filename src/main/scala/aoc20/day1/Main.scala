@@ -17,20 +17,22 @@ object Main extends IOApp {
       .as(ExitCode.Success)
 
   private def find2020Pair(numbers: Vector[Long]): Option[Long] = {
+    val s = numbers.toSet
     val pairs = for {
       x <- numbers
-      y <- numbers
-      if x + y == 2020
+      y = 2020 - x
+      if s.contains(y)
     } yield (x * y)
     pairs.headOption
   }
 
   private def find2020Triple(numbers: Vector[Long]): Option[Long] = {
+    val s = numbers.toSet
     val pairs = for {
       x <- numbers
       y <- numbers
-      z <- numbers
-      if x + y + z == 2020
+      z = 2020 - x - y
+      if s.contains(z)
     } yield (x * y * z)
     pairs.headOption
   }
