@@ -12,16 +12,18 @@ class BagSpec extends AsyncFlatSpec with Matchers {
       "light tomato bags contain 1 plaid fuchsia bag, 5 dark gray bags, 2 striped tan bags, 5 striped lavender bags.",
     )
 
-    bag.name should be("light tomato")
-    bag.otherBags.size should be(4)
-    bag.otherBags.find(_._1 == "dark gray") should be(Some(("dark gray", 5)))
+    bag.unsafeToFuture().map { bag =>
+      bag.name should be("light tomato")
+      bag.otherBags.size should be(4)
+      bag.otherBags.find(_._1 == "dark gray") should be(Some(("dark gray", 5)))
+    }
   }
 
   it should "match directly containing bag" in {
     val bags =
       Bags.fromStrings(Vector("bright white bags contain 1 shiny gold bag."))
 
-    bags.canContainGoldBags.unsafeToFuture().map(_.size should be(1))
+    bags.flatMap(_.canContainGoldBags).unsafeToFuture().map(_.size should be(1))
   }
 
   it should "match deeply containing bag" in {
@@ -33,7 +35,7 @@ class BagSpec extends AsyncFlatSpec with Matchers {
         ),
       )
 
-    bags.canContainGoldBags.unsafeToFuture().map(_.size should be(2))
+    bags.flatMap(_.canContainGoldBags).unsafeToFuture().map(_.size should be(2))
   }
 
   it should "match all bags containing gold" in {
@@ -50,7 +52,7 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.""".split("\n").toVector,
       )
 
-    bags.canContainGoldBags.unsafeToFuture().map(_.size should be(4))
+    bags.flatMap(_.canContainGoldBags).unsafeToFuture().map(_.size should be(4))
   }
 
   it should "count all bags in gold" in {
@@ -67,6 +69,6 @@ faded blue bags contain no other bags.
 dotted black bags contain no other bags.""".split("\n").toVector,
       )
 
-    bags.countBagsFromGold.unsafeToFuture().map(_ should be(32))
+    bags.flatMap(_.countBagsFromGold).unsafeToFuture().map(_ should be(32))
   }
 }
