@@ -33,7 +33,12 @@ object Main extends IOApp {
 
   def findContiguous(numbers: Vector[Long])(target: Long): Option[Long] =
     numbers.tails
-      .flatMap(_.inits.find(_.sum == target))
+      .flatMap(
+        _.inits.toVector.reverse
+          .takeWhile(_.sum <= target)
+          .lastOption
+          .find(_.sum == target),
+      )
       .find(_.nonEmpty)
       .map(v => v.min + v.max)
 }
