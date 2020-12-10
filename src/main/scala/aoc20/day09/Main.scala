@@ -1,5 +1,5 @@
 package aoc20
-package day9
+package day09
 
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}

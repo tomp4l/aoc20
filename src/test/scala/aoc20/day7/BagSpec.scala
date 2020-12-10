@@ -1,4 +1,4 @@
-package aoc20.day7
+package aoc20.day07
 
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.flatspec.AsyncFlatSpec
