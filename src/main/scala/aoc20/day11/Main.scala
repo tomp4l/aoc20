@@ -4,32 +4,38 @@ package day11
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 import scala.annotation.tailrec
+import cats.implicits._
 
 object Main extends IOApp {
+
+  import Occupancy._
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLines(11)
       .flatMap { lines =>
         val initial = Space.mapFromStrings(lines)
+        val both = (
+          stabilise(initial, 4, directlyAdjacent),
+          stabilise(initial, 5, visiablyAdjacent),
+        ).parTupled
         for {
-          _ <- Console.output(
-            1,
-            Occupancy
-              .stabilise(initial, Occupancy.directlyAdjacent)
-              .values
-              .count(_ == Occupied),
-          )
-          _ <- Console.output(
-            2,
-            Occupancy
-              .stabilise(initial, Occupancy.visiablyAdjacent, 5)
-              .values
-              .count(_ == Occupied),
-          )
+          b <- both
+          _ <- Console.output(1, b._1)
+          _ <- Console.output(2, b._2)
         } yield ()
       }
       .as(ExitCode.Success)
 
+  private def stabilise(
+    initial: SpaceMap,
+    tolerance: Int,
+    adjacentSpaces: AdjacentSpaces,
+  ) = IO {
+    Occupancy
+      .stabilise(initial, adjacentSpaces, tolerance)
+      .values
+      .count(_ == Occupied)
+  }
 }
 
 trait Space {
@@ -43,7 +49,7 @@ object Space {
     case '#' => Occupied
   }
 
-  def mapFromStrings(s: Seq[String]): Map[(Int, Int), Space] =
+  def mapFromStrings(s: Seq[String]): Occupancy.SpaceMap =
     s.zipWithIndex.flatMap { case (s, y) =>
       s.map(fromChar).zipWithIndex.map { case (s, x) => (x, y) -> s }
     }.toMap
@@ -67,7 +73,10 @@ case object Occupied extends Space {
 
 object Occupancy {
 
-  val directlyAdjacent: ((Int, Int), Map[(Int, Int), Space]) => Seq[Space] =
+  trait AdjacentSpaces extends Function2[(Int, Int), SpaceMap, Seq[Space]]
+  type SpaceMap = Map[(Int, Int), Space]
+
+  val directlyAdjacent: AdjacentSpaces =
     (coord, spaces) => {
       val adjacent = for {
         x <- -1 to 1
@@ -77,7 +86,7 @@ object Occupancy {
       adjacent.flatMap(spaces.get)
     }
 
-  val visiablyAdjacent: ((Int, Int), Map[(Int, Int), Space]) => Seq[Space] =
+  val visiablyAdjacent: AdjacentSpaces =
     (coord, spaces) => {
       val adjacent = for {
         x <- -1 to 1
@@ -98,8 +107,8 @@ object Occupancy {
 
   def newOccupancyForSpace(
     coord: (Int, Int),
-    spaces: Map[(Int, Int), Space],
-    adjacentSpaces: ((Int, Int), Map[(Int, Int), Space]) => Seq[Space],
+    spaces: SpaceMap,
+    adjacentSpaces: AdjacentSpaces,
     tolerance: Int,
   ): Space = {
     val adjacentSpace = adjacentSpaces(coord, spaces)
@@ -115,26 +124,26 @@ object Occupancy {
   }
 
   def newSpaces(
-    spaces: Map[(Int, Int), Space],
-    adjacentSpace: ((Int, Int), Map[(Int, Int), Space]) => Seq[Space],
+    spaces: SpaceMap,
+    adjacentSpace: AdjacentSpaces,
     tolerance: Int,
-  ): Map[(Int, Int), Space] =
+  ): SpaceMap =
     spaces.map { case (coord, _) =>
       coord -> newOccupancyForSpace(coord, spaces, adjacentSpace, tolerance)
     }
 
   @tailrec
   def stabilise(
-    spaces: Map[(Int, Int), Space],
-    adjacentSpace: ((Int, Int), Map[(Int, Int), Space]) => Seq[Space],
+    spaces: SpaceMap,
+    adjacentSpace: AdjacentSpaces,
     tolerance: Int = 4,
-  ): Map[(Int, Int), Space] = {
+  ): SpaceMap = {
     val next = newSpaces(spaces, adjacentSpace, tolerance)
     if (next == spaces) next
     else stabilise(next, adjacentSpace, tolerance)
   }
 
-  def doPrint(spaces: Map[(Int, Int), Space]) =
+  def doPrint(spaces: SpaceMap): IO[Unit] = IO {
     spaces.toSeq
       .map { case ((a, b), c) => ((b, a), c) }
       .sortBy(_._1)
@@ -144,4 +153,6 @@ object Occupancy {
         }
         print(c.asChar)
       }
+    print("\n")
+  }
 }
