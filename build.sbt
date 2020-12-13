@@ -16,5 +16,3 @@ addCompilerPlugin(
 )
 
 scalacOptions -= "-Xlint:nullary-override"
-
-fork in run := true
