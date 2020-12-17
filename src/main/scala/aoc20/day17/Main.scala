@@ -10,8 +10,8 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     readInputLines(17)
       .flatMap { lines =>
-        val cubes3d = Cubes.fromStrings3d(lines)
-        val cubes4d = Cubes.fromStrings4d(lines)
+        val cubes3d = Cubes.fromStrings[Coord3d](lines)
+        val cubes4d = Cubes.fromStrings[Coord4d](lines)
         for {
           _ <- Console.output(1, run6(cubes3d))
           _ <- Console.output(2, run6(cubes4d))
@@ -19,15 +19,16 @@ object Main extends IOApp {
       }
       .as(ExitCode.Success)
 
-  private def run6(cubes: Cubes) =
+  private def run6(cubes: Cubes[_]) =
     (1 to 6).foldLeft(cubes)((c, _) => c.next).powered.size
 }
 
-trait Coord {
-  def neighbours: Seq[Coord]
+trait Coord[A] {
+  def neighbours(a: A): Seq[A]
+  def plane(x: Int, y: Int): A
 }
 
-case class Coord3d(x: Int, y: Int, z: Int) extends Coord {
+case class Coord3d(x: Int, y: Int, z: Int) {
   def neighbours = for {
     dx <- -1 to 1
     dy <- -1 to 1
@@ -36,7 +37,14 @@ case class Coord3d(x: Int, y: Int, z: Int) extends Coord {
   } yield Coord3d(x + dx, y + dy, z + dz)
 }
 
-case class Coord4d(w: Int, x: Int, y: Int, z: Int) extends Coord {
+object Coord3d {
+  implicit val coordInstance: Coord[Coord3d] = new Coord[Coord3d] {
+    override def neighbours(a: Coord3d): Seq[Coord3d] = a.neighbours
+    override def plane(x: Int, y: Int): Coord3d = Coord3d(x, y, 0)
+  }
+}
+
+case class Coord4d(w: Int, x: Int, y: Int, z: Int) {
   def neighbours = for {
     dw <- -1 to 1
     dx <- -1 to 1
@@ -46,13 +54,20 @@ case class Coord4d(w: Int, x: Int, y: Int, z: Int) extends Coord {
   } yield Coord4d(w + dw, x + dx, y + dy, z + dz)
 }
 
-case class Cubes(powered: Set[Coord]) {
-  def next: Cubes = {
-    val changeCandidates = powered ++ powered.flatMap(_.neighbours)
+object Coord4d {
+  implicit val coordInstance: Coord[Coord4d] = new Coord[Coord4d] {
+    override def neighbours(a: Coord4d): Seq[Coord4d] = a.neighbours
+    override def plane(x: Int, y: Int): Coord4d = Coord4d(x, y, 0, 0)
+  }
+}
+
+case class Cubes[A](powered: Set[A])(implicit coord: Coord[A]) {
+  def next: Cubes[A] = {
+    val changeCandidates = powered ++ powered.flatMap(coord.neighbours(_))
     changeCandidates
-      .foldLeft(Set.empty[Coord]) { (s, c) =>
+      .foldLeft(Set.empty[A]) { (s, c) =>
         val isPowered = powered(c)
-        val poweredNeighbours = c.neighbours.count(powered(_))
+        val poweredNeighbours = coord.neighbours(c).count(powered(_))
         if (
           isPowered && Set(2, 3).contains(
             poweredNeighbours,
@@ -65,24 +80,16 @@ case class Cubes(powered: Set[Coord]) {
 }
 
 object Cubes {
-
-  private def fromString(
+  def fromStrings[A](
     strings: Seq[String],
-    factory: (Int, Int) => Coord,
-  ): Cubes = {
-    val powered = strings.zipWithIndex.foldLeft(Set.empty[Coord]) {
+  )(implicit coord: Coord[A]): Cubes[A] = {
+    val powered = strings.zipWithIndex.foldLeft(Set.empty[A]) {
       case (s, (line, y)) =>
         line.zipWithIndex.foldLeft(s) {
-          case (s, ('#', x)) => s + factory(x, y)
+          case (s, ('#', x)) => s + coord.plane(x, y)
           case (s, _) => s
         }
     }
     Cubes(powered)
   }
-
-  def fromStrings3d(strings: Seq[String]): Cubes =
-    fromString(strings, (x, y) => Coord3d(x, y, 0))
-
-  def fromStrings4d(strings: Seq[String]): Cubes =
-    fromString(strings, (x, y) => Coord4d(x, y, 0, 0))
 }
