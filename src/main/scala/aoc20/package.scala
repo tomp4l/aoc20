@@ -19,4 +19,11 @@ package object aoc20 {
       _ <- Console.writeLine(s"IO $tag took ${seconds}s")
     } yield v
   }
+
+  implicit class StringOps(val s: String) extends AnyVal {
+    def indexOfOption(ch: Int) = s.indexOf(ch) match {
+      case -1 => None
+      case i => Some(i)
+    }
+  }
 }
