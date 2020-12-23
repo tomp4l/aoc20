@@ -9,117 +9,78 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] =
     IO {
       val cups = Cups.fromString("784235916")
-      (1 to 100).foreach(_ => cups.next())
-      cups
-    }.flatMap(oneHundred =>
-      Console.output(1, oneHundred.fromOne.tail.mkString),
-    ) *>
+      (1 to 100).foldLeft(cups)((c, _) => c.next)
+    }
+      .flatMap(oneHundred =>
+        Console.output(1, oneHundred.fromOne.tail.mkString),
+      ) *>
       IO {
         val cups = Cups.fromStringMillion("784235916")
-        (1 to 10_000_000).foreach(_ => cups.next())
-        cups
+        (1 to 10_000_000).foldLeft(cups)((c, _) => c.next)
       }.flatMap(tenMillion =>
         Console.output(2, tenMillion.fromOne.tail.take(2).map(_.toLong).product),
       ).as(ExitCode.Success)
 
 }
 
-class Cups private (
-  var cups: MutableLinkedList[Int],
-  lookup: Map[Int, MutableLinkedList[Int]],
+case class Cups private (
+  cups: Map[Int, Int],
+  position: Int,
   max: Int,
 ) {
-
-  private def locate(n: Int, not: Seq[Int]): MutableLinkedList[Int] = {
+  private def locate(n: Int, not: Seq[Int]): Int = {
     val m = n - 1
     val mPos = if (m < 1) max else m
     if (not.contains(mPos)) locate(mPos, not)
-    else lookup(mPos)
+    else mPos
   }
 
-  def next(): Unit = {
-    val a = cups.next
-    val b = a.next
-    val c = b.next
-    val three = List(a, b, c).map(_.value)
-
-    val fourth = c.next
-    cups.next = fourth
-    fourth.previous = cups
-
-    val next = locate(cups.value, three)
-    val nextNext = next.next
-    next.next = a
-    a.previous = next
-    nextNext.previous = c
-    c.next = nextNext
-    cups = cups.next
+  def next: Cups = {
+    val a = cups(position)
+    val b = cups(a)
+    val c = cups(b)
+    val three = List(a, b, c)
+    val fourth = cups(c)
+    val next = locate(position, three)
+    val updates = List(position -> fourth, next -> a, c -> cups(next))
+    val nextCups = cups ++ updates
+    new Cups(cups = nextCups, nextCups(position), max)
   }
 
   def fromOne = {
     def loop(
-      list: MutableLinkedList[Int],
+      v: Int,
       acc: List[Int] = List.empty,
     ): List[Int] = {
-      val p = list.previous
-      if (p.value == 1) {
-        1 :: acc
+      val p = cups(v)
+      if (p == 1) {
+        acc.reverse
       } else {
-        loop(p, p.value :: acc)
+        loop(p, p :: acc)
       }
     }
-    loop(lookup(1))
+    1 :: loop(1)
   }
 }
 
 object Cups {
   def fromString(string: String) = {
     val cups = string.toVector.map(_.toString.toInt)
-    Cups(MutableLinkedList.fromSeq(cups))
+    Cups(cups)
   }
 
   def fromStringMillion(string: String) = {
     val cups = string.toVector.map(_.toString.toInt)
-    Cups(MutableLinkedList.fromSeq(cups ++ (10 to 1_000_000)))
+    Cups((cups ++ (10 to 1_000_000)))
   }
 
-  def apply(l: MutableLinkedList[Int]): Cups = {
-    def loop(
-      head: MutableLinkedList[Int],
-      acc: Map[Int, MutableLinkedList[Int]],
-    ): Map[Int, MutableLinkedList[Int]] =
-      if (head == l) {
-        acc + (head.value -> head)
-      } else {
-        val n = acc + (head.value -> head)
-        loop(head.next, n)
+  def apply(l: Seq[Int]): Cups = {
+    val map =
+      l.sliding(2).foldLeft(Map(l.last -> l.head)) { (map, neighbours) =>
+        val a = neighbours.head
+        val b = neighbours.last
+        map + (a -> b)
       }
-    val lookup = loop(l.next, Map.empty)
-    val max = lookup.keys.max
-    new Cups(l, lookup, max)
-  }
-}
-
-final class MutableLinkedList[A](val value: A) {
-  var previous: MutableLinkedList[A] = _
-  var next: MutableLinkedList[A] = _
-}
-
-object MutableLinkedList {
-  def fromSeq(s: Seq[Int]) = {
-    val mapped = s.map(new MutableLinkedList(_))
-    mapped.sliding(2).foreach { neighbours =>
-      val a = neighbours.head
-      val b = neighbours.last
-      a.next = b
-      b.previous = a
-    }
-
-    val head = mapped.head
-    val last = mapped.last
-    head.previous = last
-    last.next = head
-
-    mapped.head
+    Cups(map, l.head, l.max)
   }
 }
