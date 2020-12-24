@@ -5,7 +5,6 @@ import fastparse._, NoWhitespace._
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 import aoc20.cellularautomaton.Automaton
-import aoc20.cellularautomaton.BooleanIsomorphism
 import aoc20.cellularautomaton.Coord
 
 object Main extends IOApp {
@@ -48,28 +47,6 @@ object Direction {
     parse(s, parser(_)).fold((_, _, _) => None, (v, _) => Some(v))
 }
 
-sealed trait TileColour {
-  def flip: TileColour
-}
-case object Black extends TileColour {
-  def flip: TileColour = White
-}
-case object White extends TileColour {
-  def flip: TileColour = Black
-}
-
-object TileColour {
-  implicit val booleanInstance: BooleanIsomorphism[TileColour] =
-    new BooleanIsomorphism[TileColour] {
-      def truthy: TileColour = Black
-      def fromBool(b: Boolean): TileColour = if (b) Black else White
-      def value(a: TileColour): Boolean = a match {
-        case Black => true
-        case White => false
-      }
-    }
-}
-
 case class HexaganolCoordinate(x: Int, y: Int) {
   def move(d: Direction) = d match {
     case East => copy(x = x + 1)
@@ -96,15 +73,14 @@ object HexaganolCoordinate {
     a => a.neighbours
 }
 
-case class Floor(tiles: Map[HexaganolCoordinate, TileColour]) {
-  def flip(coord: HexaganolCoordinate): Floor = {
-    val colour = tiles.getOrElse(coord, White)
-    Floor(tiles + (coord -> colour.flip))
-  }
+case class Floor(tiles: Set[HexaganolCoordinate]) {
+  def flip(coord: HexaganolCoordinate): Floor =
+    if (tiles.contains(coord)) Floor(tiles - coord)
+    else Floor(tiles + coord)
 }
 
 object Floor {
-  def empty = Floor(Map.empty)
+  def empty = Floor(Set.empty)
 }
 
 object Worker {
@@ -118,18 +94,17 @@ object Worker {
     }
 
   def flipAndCountBlack(directions: Seq[Seq[Direction]]): Int =
-    initialState(directions).tiles.values.count(_ == Black)
+    initialState(directions).tiles.size
 
   def run100Days(directions: Seq[Seq[Direction]]) = {
     val initial = initialState(directions)
     Automaton
-      .runN[HexaganolCoordinate, Map[?, TileColour]](
+      .runN(
         initial.tiles,
         i => i == 1 || i == 2,
         i => i == 2,
         100,
       )
-      .values
-      .count(_ == Black)
+      .size
   }
 }
