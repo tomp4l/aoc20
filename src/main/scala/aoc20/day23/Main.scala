@@ -7,14 +7,13 @@ import cats.effect.{ExitCode, IO}
 object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] =
-    IO {
+    IO.blocking {
       val cups = Cups.fromString("784235916")
       (1 to 100).foldLeft(cups)((c, _) => c.next)
-    }
-      .flatMap(oneHundred =>
-        Console.output(1, oneHundred.fromOne.tail.mkString),
-      ) *>
-      IO {
+    }.flatMap(oneHundred =>
+      Console.output(1, oneHundred.fromOne.tail.mkString),
+    ) *>
+      IO.blocking {
         val cups = Cups.fromStringMillion("784235916")
         (1 to 10_000_000).foldLeft(cups)((c, _) => c.next)
       }.flatMap(tenMillion =>

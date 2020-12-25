@@ -12,7 +12,7 @@ object Main extends IOApp {
   final val InitialSubject = 7
 
   override def run(args: List[String]): IO[ExitCode] =
-    (IO {
+    (IO.blocking {
       val c = findLoop(cardPublic)
       val d = findLoop(doorPublic)
       val k1 = loop(c, doorPublic)

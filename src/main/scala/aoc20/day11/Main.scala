@@ -30,7 +30,7 @@ object Main extends IOApp {
     initial: SpaceMap,
     tolerance: Int,
     adjacentSpaces: AdjacentSpaces,
-  ) = IO {
+  ) = IO.blocking {
     Occupancy
       .stabilise(initial, adjacentSpaces, tolerance)
       .values
