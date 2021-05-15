@@ -5,7 +5,7 @@ import org.scalatest.flatspec.AsyncFlatSpec
 
 import cats.effect.unsafe.implicits.global
 
-class BagSpec extends AsyncFlatSpec with Matchers {
+class BagSpec extends AsyncFlatSpec with Matchers:
 
   it should "parse a bag" in {
     val bag = Bag.fromString(
@@ -71,4 +71,3 @@ dotted black bags contain no other bags.""".split("\n").toVector,
 
     bags.flatMap(_.countBagsFromGold).unsafeToFuture().map(_ should be(32))
   }
-}

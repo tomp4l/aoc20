@@ -4,16 +4,16 @@ package day06
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInput(6)
       .map(_.split("\n\n").toVector)
       .flatMap(groups =>
-        for {
+        for
           _ <- Console.output(1, countAnyYes(groups))
           _ <- Console.output(2, countAllYes(groups))
-        } yield (),
+        yield (),
       )
       .as(ExitCode.Success)
 
@@ -26,4 +26,3 @@ object Main extends IOApp {
     groups.map { g =>
       g.split("\n").map(_.toSet).reduce(_.intersect(_)).size
     }.sum
-}

@@ -5,18 +5,17 @@ import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 import scala.util.Try
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLines(2)
       .flatMap(lines =>
-        for {
+        for
           _ <- Console
             .output(1, countPassword(lines, Validators.MinMaxValidator))
           _ <- Console
             .output(2, countPassword(lines, Validators.PositionValidator))
-
-        } yield (),
+        yield (),
       )
       .as(ExitCode.Success)
 
@@ -26,52 +25,45 @@ object Main extends IOApp {
       .filter(_.map(_.isValid).getOrElse(false))
       .size
 
-}
-
-trait Validator {
+trait Validator:
   def isValid(policy: PasswordPolicy, password: String): Boolean
-}
 
-object Validators {
+object Validators:
   val MinMaxValidator: Validator = (policy: PasswordPolicy, password: String) =>
     {
-      import policy._
+      import policy.*
       val charCount = password.filter(_ == char).size
       charCount >= a && charCount <= b
     }
 
   val PositionValidator: Validator =
     (policy: PasswordPolicy, password: String) => {
-      import policy._
+      import policy.*
       val c1 = password.lift(a - 1)
       val c2 = password.lift(b - 1)
-      (c1, c2) match {
+      (c1, c2) match
         case (Some(c1), Some(c2)) if (c1 == char || c2 == char) && c1 != c2 =>
           true
         case _ => false
-      }
     }
-}
 
 case class PasswordPolicy(
   a: Int,
   b: Int,
   char: Char,
   validator: Validator,
-) {
+):
   def isValid(password: String) = validator.isValid(this, password)
-}
 
-case class PasswordWithPolicy(password: String, policy: PasswordPolicy) {
+case class PasswordWithPolicy(password: String, policy: PasswordPolicy):
   def isValid = policy.isValid(password)
-}
 
-object PasswordWithPolicy {
+object PasswordWithPolicy:
   final val Syntax = """(\d+)-(\d+) (.): (.*)""".r
 
   def parse(
     validator: Validator,
-  )(line: String): Option[PasswordWithPolicy] = line match {
+  )(line: String): Option[PasswordWithPolicy] = line match
     case Syntax(a, b, char, password) =>
       Try(
         PasswordWithPolicy(
@@ -85,5 +77,3 @@ object PasswordWithPolicy {
         ),
       ).toOption
     case _ => None
-  }
-}

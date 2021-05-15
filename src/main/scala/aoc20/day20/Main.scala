@@ -3,18 +3,18 @@ package day20
 
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
-import cats.implicits._
+import cats.implicits.*
 
-import scala.util.chaining._
+import scala.util.chaining.*
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInput(20)
       .flatMap { input =>
         val tileString = input.split("\n\n")
         val tiles = tileString.flatMap(Tile.fromString).toVector
-        for {
+        for
           _ <- Console.output(
             1,
             FullImage.findCorners(tiles).map(_.id.toLong).product,
@@ -32,17 +32,15 @@ object Main extends IOApp {
               allImages.map(_.roughness).min
             },
           )
-        } yield ()
+        yield ()
       }
       .as(ExitCode.Success)
 
-}
-
-case class Tile(id: Int, pixels: Seq[Seq[Boolean]]) {
+case class Tile(id: Int, pixels: Seq[Seq[Boolean]]):
   def asString = s"Tile ($id):\n" ++ Pixels.asString(pixels)
 
   private def boolsToInt(bools: Seq[Boolean]): Int =
-    bools.map(if (_) '1' else "0").mkString.pipe(Integer.parseInt(_, 2))
+    bools.map(if _ then '1' else "0").mkString.pipe(Integer.parseInt(_, 2))
 
   val top = boolsToInt(pixels.head)
   val bottom = boolsToInt(pixels.last)
@@ -62,20 +60,17 @@ case class Tile(id: Int, pixels: Seq[Seq[Boolean]]) {
 
   def neighbours(side: Int): Boolean =
     sides.contains(side) || rotate.rotate.sides.contains(side)
-}
 
-object Tile {
-  def fromString(s: String) = {
+object Tile:
+  def fromString(s: String) =
     val split = s.split("\n")
-    for {
+    for
       h <- split.headOption
       m <- """Tile (\d+):""".r.findFirstMatchIn(h)
       id <- m.group(1).toIntOption
-    } yield Tile(id, split.tail.toVector.map(_.toVector.map(_ == '#')))
-  }
-}
+    yield Tile(id, split.tail.toVector.map(_.toVector.map(_ == '#')))
 
-object Pixels {
+object Pixels:
   def rotate(pixels: Seq[Seq[Boolean]]) =
     pixels.foldLeft(Seq.fill(pixels.length)(Seq.empty[Boolean])) {
       (acc, line) =>
@@ -89,12 +84,11 @@ object Pixels {
     }
 
   def asString(pixels: Seq[Seq[Boolean]]) = pixels
-    .map(v => v.map(if (_) '#' else '.').mkString ++ "\n")
+    .map(v => v.map(if _ then '#' else '.').mkString ++ "\n")
     .mkString
-}
 
-case class FullImage(pixels: Seq[Seq[Boolean]]) {
-  import FullImage._
+case class FullImage(pixels: Seq[Seq[Boolean]]):
+  import FullImage.*
 
   def asString = Pixels.asString(pixels)
 
@@ -106,7 +100,7 @@ case class FullImage(pixels: Seq[Seq[Boolean]]) {
     .map { slices =>
       val patterns = slices.map(_.sliding(SeaMonsterWidth).toVector)
       val masks = patterns.zip(SeaMonsterMask).map { case (s, m) =>
-        s.map(_.zip(m).forall { case (l, r) => if (r) l else true })
+        s.map(_.zip(m).forall { case (l, r) => if r then l else true })
       }
       val grouped = masks.tail.foldLeft(masks.head.map(Seq(_))) { (a, b) =>
         a.zip(b).map { case (a, b) => a :+ b }
@@ -117,9 +111,8 @@ case class FullImage(pixels: Seq[Seq[Boolean]]) {
 
   def roughness =
     pixels.map(_.count(_ == true)).sum - findSeaMonsters * SeaMonsterPixels
-}
 
-object FullImage {
+object FullImage:
   final private val SeaMonsterString =
     """                  # 
       |#    ##    ##    ###
@@ -137,7 +130,7 @@ object FullImage {
   def findCorners(tiles: Seq[Tile]) =
     tiles.filter(findNeighbours(_, tiles).length == 2)
 
-  private def findNeighbours(tile: Tile, tiles: Seq[Tile]) = {
+  private def findNeighbours(tile: Tile, tiles: Seq[Tile]) =
     val rest = tiles.filterNot(_ == tile)
     val sides = tile.sides
     rest
@@ -147,15 +140,14 @@ object FullImage {
           .nonEmpty,
       )
       .map(_.id)
-  }
 
   private def along(
     compare: (Tile, Tile) => Boolean,
     next: (Tile) => Int,
   ): (Tile, Tile, Seq[Tile]) => Seq[Tile] = (a, b, remaining) => {
     val matched =
-      if (compare(a, b)) Some(b)
-      else if (compare(a, b.flip)) Some(b.flip)
+      if compare(a, b) then Some(b)
+      else if compare(a, b.flip) then Some(b.flip)
       else None
     matched
       .map { m =>
@@ -173,16 +165,15 @@ object FullImage {
   private val row = along((a, b) => a.right == b.left, _.right)
   private val column = along((a, b) => a.bottom == b.top, _.bottom)
 
-  def fromTiles(tiles: Seq[Tile]) = {
+  def fromTiles(tiles: Seq[Tile]) =
     val corner = findCorners(tiles).head
     val remaining = tiles.filter(_.id != corner.id)
 
-    def orientTopLeft(corner: Tile): Tile = {
+    def orientTopLeft(corner: Tile): Tile =
       val right = remaining.exists(t => t.neighbours(corner.right))
       val bottom = remaining.exists(t => t.neighbours(corner.bottom))
-      if (right && bottom) corner
+      if right && bottom then corner
       else orientTopLeft(corner.rotate)
-    }
 
     val topLeft = orientTopLeft(corner)
 
@@ -205,5 +196,3 @@ object FullImage {
           a.zip(b).map { case (l, r) => l.tail.init ++ r }
         }
     })
-  }
-}

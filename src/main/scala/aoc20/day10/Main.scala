@@ -4,19 +4,19 @@ package day10
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLongs(10)
       .flatMap { numbers =>
-        for {
+        for
           _ <- Console.output(1, find1or3Jolts(numbers))
           _ <- Console.output(2, countValidCombinations(numbers))
-        } yield ()
+        yield ()
       }
       .as(ExitCode.Success)
 
-  def find1or3Jolts(adapters: Vector[Long]): Int = {
+  def find1or3Jolts(adapters: Vector[Long]): Int =
     val withBaseAndBuiltin =
       (Vector(0, adapters.max + 3) ++ adapters).sorted
     val differences =
@@ -24,9 +24,8 @@ object Main extends IOApp {
     val oneJolt = differences.count(_ == 1)
     val threeJolt = differences.count(_ == 3)
     oneJolt * threeJolt
-  }
 
-  def countValidCombinations(adapters: Vector[Long]): Long = {
+  def countValidCombinations(adapters: Vector[Long]): Long =
     val withBaseAndBuiltin =
       (Vector(0, adapters.max + 3) ++ adapters).sorted
     val differences =
@@ -42,5 +41,3 @@ object Main extends IOApp {
         case 4 => 7L
       })
       .product
-  }
-}

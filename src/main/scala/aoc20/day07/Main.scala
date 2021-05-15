@@ -3,27 +3,26 @@ package day07
 
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
-import cats.implicits._
+import cats.implicits.*
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLines(7)
       .flatMap { lines =>
-        for {
+        for
           bags <- Bags.fromStrings(lines)
           canContainGoldBags <- bags.canContainGoldBags
           _ <- Console.output(1, canContainGoldBags.length)
           countBagsFromGold <- bags.countBagsFromGold
           _ <- Console.output(2, countBagsFromGold)
-        } yield ()
+        yield ()
       }
       .as(ExitCode.Success)
-}
 
 case class Bag(name: String, otherBags: Vector[(String, Int)])
 
-object Bag {
+object Bag:
   def fromString(string: String): IO[Bag] = IO {
     val (nameParts, rest) = string.split(" ").splitAt(2)
     (nameParts.mkString(" "), rest)
@@ -44,15 +43,14 @@ object Bag {
       .sequence
       .map(v => Bag(name, v.flatten))
   }
-}
 
-case class Bags(map: Map[String, Bag]) {
+case class Bags(map: Map[String, Bag]):
   def canContainGoldBags: IO[Vector[Bag]] =
     map.values.toVector
       .filterA(bag => containsBagIO(bag, "shiny gold"))
 
   private def containsBagIO(bag: Bag, name: String): IO[Boolean] =
-    if (bag.otherBags.exists { case (n, _) => n == name }) true.pure[IO]
+    if bag.otherBags.exists { case (n, _) => n == name } then true.pure[IO]
     else
       bag.otherBags
         .flatMap { case (n, _) =>
@@ -62,7 +60,7 @@ case class Bags(map: Map[String, Bag]) {
         }
         .existsM(identity)
 
-  def countBagsFromGold: IO[Int] = {
+  def countBagsFromGold: IO[Int] =
     val gold = map("shiny gold")
     def countRecursive(bag: Bag): IO[Int] =
       bag.otherBags
@@ -72,10 +70,8 @@ case class Bags(map: Map[String, Bag]) {
         .sequence
         .map(_.sum + 1)
     countRecursive(gold).map(_ - 1)
-  }
-}
 
-object Bags {
+object Bags:
 
   def fromStrings(strings: Vector[String]): IO[Bags] =
     strings
@@ -83,4 +79,3 @@ object Bags {
       .sequence
       .map(_.map(bag => bag.name -> bag).toMap)
       .map(Bags(_))
-}

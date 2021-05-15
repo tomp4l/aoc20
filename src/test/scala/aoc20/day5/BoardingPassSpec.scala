@@ -3,7 +3,7 @@ package aoc20.day05
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class BoardingPassSpec extends AnyFlatSpec with Matchers {
+class BoardingPassSpec extends AnyFlatSpec with Matchers:
 
   it should "find the correct row for a binary space partitioning" in {
     BoardingPass.calculateRow("FBFBBFF") should be(44)
@@ -22,4 +22,3 @@ class BoardingPassSpec extends AnyFlatSpec with Matchers {
     BoardingPass.calculateId("FFFBBBFRRR") should be(119)
     BoardingPass.calculateId("BBFFBBFRLL") should be(820)
   }
-}

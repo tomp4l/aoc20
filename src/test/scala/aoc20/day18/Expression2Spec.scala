@@ -3,7 +3,7 @@ package aoc20.day18
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class Expression2Spec extends AnyFlatSpec with Matchers {
+class Expression2Spec extends AnyFlatSpec with Matchers:
 
   it should "parse 1 + 2" in {
     Expression2.parseLine("1 + 2").run should be(
@@ -48,4 +48,3 @@ class Expression2Spec extends AnyFlatSpec with Matchers {
       BigInt(23340),
     )
   }
-}

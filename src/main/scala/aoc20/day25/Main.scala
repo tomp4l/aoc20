@@ -4,7 +4,7 @@ package day25
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   val cardPublic = 2069194
   val doorPublic = 16426071
@@ -25,13 +25,10 @@ object Main extends IOApp {
     target: Int,
     currentLoop: Int = 1,
     previous: Int = 1,
-  ): Int = {
+  ): Int =
     val next = (previous * InitialSubject) % Modulus
-    if (next == target) {
-      currentLoop
-    } else findLoop(target, currentLoop + 1, next)
-  }
+    if next == target then currentLoop
+    else findLoop(target, currentLoop + 1, next)
 
   private def loop(loops: Int, subject: Int) =
     BigInt(subject).modPow(BigInt(loops), BigInt(Modulus)).toInt
-}

@@ -4,11 +4,11 @@ package day11
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 import scala.annotation.tailrec
-import cats.implicits._
+import cats.implicits.*
 
-object Main extends IOApp {
+object Main extends IOApp:
 
-  import Occupancy._
+  import Occupancy.*
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLines(11)
@@ -18,11 +18,11 @@ object Main extends IOApp {
           stabilise(initial, 4, directlyAdjacent),
           stabilise(initial, 5, visiablyAdjacent),
         ).parTupled
-        for {
+        for
           b <- both
           _ <- Console.output(1, b._1)
           _ <- Console.output(2, b._2)
-        } yield ()
+        yield ()
       }
       .as(ExitCode.Success)
 
@@ -36,63 +36,55 @@ object Main extends IOApp {
       .values
       .count(_ == Occupied)
   }
-}
 
-trait Space {
+trait Space:
   def asChar: Char
-}
 
-object Space {
-  def fromChar(c: Char): Space = c match {
+object Space:
+  def fromChar(c: Char): Space = c match
     case '.' => Floor
     case 'L' => Empty
     case '#' => Occupied
-  }
 
   def mapFromStrings(s: Seq[String]): Occupancy.SpaceMap =
     s.zipWithIndex.flatMap { case (s, y) =>
       s.map(fromChar).zipWithIndex.map { case (s, x) => (x, y) -> s }
     }.toMap
-}
 
-case object Floor extends Space {
+case object Floor extends Space:
 
   override def asChar: Char = '.'
 
-}
-case object Empty extends Space {
+case object Empty extends Space:
 
   override def asChar: Char = 'L'
 
-}
-case object Occupied extends Space {
+case object Occupied extends Space:
 
   override def asChar: Char = '#'
 
-}
-
-object Occupancy {
+object Occupancy:
 
   trait AdjacentSpaces extends Function2[(Int, Int), SpaceMap, Seq[Space]]
   type SpaceMap = Map[(Int, Int), Space]
 
   val directlyAdjacent: AdjacentSpaces =
     (coord, spaces) => {
-      val adjacent = for {
+      val adjacent = for
         x <- -1 to 1
         y <- -1 to 1
         if x != 0 || y != 0
-      } yield (coord._1 + x, coord._2 + y)
+      yield (coord._1 + x, coord._2 + y)
       adjacent.flatMap(spaces.get)
     }
 
   val visiablyAdjacent: AdjacentSpaces =
     (coord, spaces) => {
-      val adjacent = for {
+      val adjacent = for
         x <- -1 to 1
         y <- -1 to 1
         if x != 0 || y != 0
-      } yield (x, y)
+      yield (x, y)
       val adjacentCoords = adjacent
         .map { case (x, y) =>
           LazyList
@@ -110,18 +102,16 @@ object Occupancy {
     spaces: SpaceMap,
     adjacentSpaces: AdjacentSpaces,
     tolerance: Int,
-  ): Space = {
+  ): Space =
     val adjacentSpace = adjacentSpaces(coord, spaces)
-    spaces(coord) match {
+    spaces(coord) match
       case Floor => Floor
       case Empty =>
-        if (adjacentSpace.forall(_ != Occupied)) Occupied
+        if adjacentSpace.forall(_ != Occupied) then Occupied
         else Empty
       case Occupied =>
-        if (adjacentSpace.count(_ == Occupied) >= tolerance) Empty
+        if adjacentSpace.count(_ == Occupied) >= tolerance then Empty
         else Occupied
-    }
-  }
 
   def newSpaces(
     spaces: SpaceMap,
@@ -137,22 +127,18 @@ object Occupancy {
     spaces: SpaceMap,
     adjacentSpace: AdjacentSpaces,
     tolerance: Int = 4,
-  ): SpaceMap = {
+  ): SpaceMap =
     val next = newSpaces(spaces, adjacentSpace, tolerance)
-    if (next == spaces) next
+    if next == spaces then next
     else stabilise(next, adjacentSpace, tolerance)
-  }
 
   def doPrint(spaces: SpaceMap): IO[Unit] = IO {
     spaces.toSeq
       .map { case ((a, b), c) => ((b, a), c) }
       .sortBy(_._1)
       .foreach { case ((_, y), c) =>
-        if (y == 0) {
-          print('\n')
-        }
+        if y == 0 then print('\n')
         print(c.asChar)
       }
     print("\n")
   }
-}

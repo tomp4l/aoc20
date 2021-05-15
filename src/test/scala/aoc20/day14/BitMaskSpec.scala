@@ -3,7 +3,7 @@ package aoc20.day14
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-class BitMaskSpec extends AnyFlatSpec with Matchers {
+class BitMaskSpec extends AnyFlatSpec with Matchers:
 
   it should "mask a number with bits to change" in {
     val b = BitMask("XXXXXXXXXXXXXXXXXXXXXXXXXXXXX1XXXX0X")
@@ -34,4 +34,3 @@ class BitMaskSpec extends AnyFlatSpec with Matchers {
     b(42).length should be(4)
     b(42).toVector.sorted should be(Vector(26, 27, 58, 59))
   }
-}

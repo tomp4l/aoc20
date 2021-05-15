@@ -4,19 +4,19 @@ package day09
 import cats.effect.IOApp
 import cats.effect.{ExitCode, IO}
 
-object Main extends IOApp {
+object Main extends IOApp:
 
   override def run(args: List[String]): IO[ExitCode] =
     readInputLongs(9)
       .flatMap { numbers =>
         val invalidNumber = findFirstInvalid(numbers)
-        for {
+        for
           _ <- Console.outputOptional(1, invalidNumber)
           _ <- Console.outputOptional(
             2,
             invalidNumber.flatMap(findContiguous(numbers)),
           )
-        } yield ()
+        yield ()
       }
       .as(ExitCode.Success)
 
@@ -41,4 +41,3 @@ object Main extends IOApp {
       )
       .find(_.nonEmpty)
       .map(v => v.min + v.max)
-}
